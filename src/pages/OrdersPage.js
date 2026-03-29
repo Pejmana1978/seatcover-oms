@@ -13,7 +13,22 @@ export default function OrdersPage({ orders, setOrders, role }) {
   const [stageFilter, setStageFilter] = useState('All')
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [showNew, setShowNew] = useState(false)
+  const [syncing, setSyncing] = useState(false)
   const toast = useToast()
+  async function syncEbay() {
+  setSyncing(true)
+  try {
+    const res = await fetch(`${process.env.REACT_APP_SUPABASE_URL}/functions/v1/ebay-sync`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${process.env.REACT_APP_SUPABASE_ANON_KEY}` }
+    })
+    const data = await res.json()
+    if (data.error) throw new Error(data.error)
+    toast(`Imported ${data.imported} new eBay order${data.imported !== 1 ? 's' : ''}`)
+    if (data.imported > 0) window.location.reload()
+  } catch (e) { toast(e.message, 'error') }
+  setSyncing(false)
+}
 
   const stageCounts = useMemo(() => {
     const c = { All: orders.length }
@@ -75,6 +90,7 @@ export default function OrdersPage({ orders, setOrders, role }) {
           {['Shopify', 'eBay', 'Manual'].map(s => <option key={s}>{s}</option>)}
         </select>
         {canCreate && <Btn variant="primary" onClick={() => setShowNew(true)}>+ New order</Btn>}
+{canCreate && <Btn variant="default" onClick={syncEbay} disabled={syncing}>{syncing ? 'Syncing eBay…' : 'Sync eBay orders'}</Btn>}
       </div>
 
       {/* Stage tabs */}
