@@ -8,6 +8,8 @@ import OrderModal from '../components/OrderModal'
 
 export default function ShippingPage({ orders, setOrders, role }) {
   const [selected, setSelected] = useState(null)
+  const [labelLoading, setLabelLoading] = useState({})
+  const [addressModal, setAddressModal] = useState(null)
   const toast = useToast()
 
   const ship = orders.filter(o => ['Production completed', 'Packed', 'Shipped'].includes(o.stage))
@@ -25,34 +27,46 @@ export default function ShippingPage({ orders, setOrders, role }) {
     } catch (e) { toast(e.message, 'error') }
   }
 
-  function printLabel(o) {
-    const w = window.open('', '_blank')
-    w.document.write(`
-      <html><head><title>Shipping Label ${o.order_ref}</title>
-      <style>
-        body{font-family:sans-serif;padding:32px;font-size:13px}
-        .label{border:2px solid #333;padding:24px;max-width:360px;border-radius:8px}
-        h2{margin-bottom:14px;font-size:16px}
-        .row{display:flex;gap:12px;margin-bottom:6px}
-        .key{color:#888;min-width:70px}
-        .contents{border:1px solid #ccc;padding:12px;border-radius:6px;margin-top:14px;background:#f9f9f9}
-        .barcode{font-family:monospace;font-size:16px;letter-spacing:4px;text-align:center;padding:10px;border:1px solid #ccc;border-radius:4px;margin-top:12px}
-        @media print{button{display:none}}
-      </style></head><body>
-      <div class="label">
-        <h2>Shipping Label — ${o.order_ref}</h2>
-        <div class="row"><span class="key">To</span><strong>${o.customer_name}</strong></div>
-        <div class="row"><span class="key">Email</span><span>${o.email || '—'}</span></div>
-        <div class="row"><span class="key">Phone</span><span>${o.phone || '—'}</span></div>
-        <div class="contents">
-          <strong>${o.seats} seat covers — ${o.color}</strong><br/>
-          <span style="color:#888;font-size:11px">${o.car}</span>
-        </div>
-        <div class="barcode">${o.order_ref}</div>
-      </div>
-      <br/><button onclick="window.print()">Print label</button>
-      </body></html>`)
-    w.document.close()
+  async function upsLabel(o) {
+    if (!o.address) { toast('No address on this order', 'error'); return; }
+    setLabelLoading(prev => ({ ...prev, [o.id]: 'validating' }))
+    try {
+      const valRes = await fetch('/api/ups-label', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: o, validateOnly: true })
+      })
+      const valData = await valRes.json()
+      const candidates = valData.validation?.XAVResponse?.Candidate
+      const ambiguous = Array.isArray(candidates) && candidates.length > 1
+      if (ambiguous) {
+        setAddressModal({ order: o, candidates })
+        setLabelLoading(prev => ({ ...prev, [o.id]: null }))
+        return
+      }
+      await generateLabel(o)
+    } catch(e) { toast(e.message, 'error'); setLabelLoading(prev => ({ ...prev, [o.id]: null })) }
+  }
+
+  async function generateLabel(o) {
+    setLabelLoading(prev => ({ ...prev, [o.id]: 'generating' }))
+    try {
+      const res = await fetch('/api/ups-label', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: o })
+      })
+      const data = await res.json()
+      if (data.error) throw new Error(data.error)
+      const { updateOrder } = await import('../lib/api')
+      const updated = await updateOrder(o.id, { tracking_number: data.trackingNumber })
+      setOrders(prev => prev.map(x => x.id === o.id ? updated : x))
+      const pdf = `data:application/pdf;base64,${data.labelBase64}`
+      window.open(pdf, '_blank')
+      toast(`Label created — tracking: ${data.trackingNumber}`)
+    } catch(e) { toast(e.message, 'error') }
+    setLabelLoading(prev => ({ ...prev, [o.id]: null }))
+    setAddressModal(null)
   }
 
   function handleUpdated(updated) {
@@ -87,6 +101,7 @@ export default function ShippingPage({ orders, setOrders, role }) {
                   <td style={{ padding: '9px 11px' }}>
                     <div style={{ fontSize: 12 }}>{o.customer_name}</div>
                     <div style={{ fontSize: 10, color: '#aaa' }}>{o.email}</div>
+                    {o.tracking_number && <div style={{ fontSize: 10, color: '#185FA5', marginTop: 2 }}>📦 {o.tracking_number}</div>}
                   </td>
                   <td style={{ padding: '9px 11px' }}>
                     <div style={{ fontSize: 12 }}>{o.car}</div>
@@ -95,7 +110,7 @@ export default function ShippingPage({ orders, setOrders, role }) {
                   <td style={{ padding: '9px 11px' }}><StageBadge stage={o.stage} /></td>
                   <td style={{ padding: '9px 11px' }} onClick={e => e.stopPropagation()}>
                     <div style={{ display: 'flex', gap: 5 }}>
-                      <Btn size="sm" onClick={() => printLabel(o)}>Print label</Btn>
+                      <Btn size="sm" onClick={() => upsLabel(o)} disabled={!!labelLoading[o.id]}>{labelLoading[o.id] === 'validating' ? 'Validating…' : labelLoading[o.id] === 'generating' ? 'Generating…' : o.tracking_number ? '🖨 Reprint' : '📦 UPS Label'}</Btn>
                       <Btn size="sm" variant="success" onClick={() => advance(o.id)}>Advance</Btn>
                     </div>
                   </td>
@@ -108,6 +123,30 @@ export default function ShippingPage({ orders, setOrders, role }) {
 
       {selected && (
         <OrderModal order={selected} role={role} onClose={() => setSelected(null)} onUpdated={handleUpdated} />
+      )}
+      {addressModal && (
+        <div style={{ position:'fixed', inset:0, background:'rgba(0,0,0,0.4)', display:'flex', alignItems:'center', justifyContent:'center', zIndex:1000 }}>
+          <div style={{ background:'#fff', borderRadius:12, padding:28, maxWidth:480, width:'90%' }}>
+            <h3 style={{ marginBottom:12, fontSize:15 }}>Address Verification</h3>
+            <p style={{ fontSize:12, color:'#666', marginBottom:16 }}>UPS found multiple address suggestions. Please select the correct one or proceed with the original.</p>
+            {addressModal.candidates.map((c, i) => {
+              const a = c.AddressKeyFormat
+              const formatted = [a.AddressLine, a.PoliticalDivision2, a.PostcodePrimaryLow, a.CountryCode].filter(Boolean).join(', ')
+              return (
+                <div key={i} onClick={() => generateLabel({ ...addressModal.order, address: formatted })}
+                  style={{ padding:'10px 14px', border:'1px solid #e0ddd8', borderRadius:8, marginBottom:8, cursor:'pointer', fontSize:12 }}
+                  onMouseEnter={e => e.currentTarget.style.background='#f5f5f5'}
+                  onMouseLeave={e => e.currentTarget.style.background=''}>
+                  {formatted}
+                </div>
+              )
+            })}
+            <div style={{ display:'flex', gap:8, marginTop:16 }}>
+              <Btn size="sm" onClick={() => generateLabel(addressModal.order)}>Use original address</Btn>
+              <Btn size="sm" variant="danger" onClick={() => setAddressModal(null)}>Cancel</Btn>
+            </div>
+          </div>
+        </div>
       )}
     </>
   )
