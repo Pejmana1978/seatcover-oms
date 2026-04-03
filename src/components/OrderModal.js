@@ -39,6 +39,42 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
 
   function setF(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
 
+  function parseTitle() {
+    const title = form.car || ''
+    // Extract year range
+    const yearMatch = title.match(/\b(20\d{2})(?:[\-–](20\d{2}))?\b/)
+    const year = yearMatch ? yearMatch[0] : ''
+    // Extract make/model - look for common patterns
+    const makeModelMatch = title.match(/(?:For\s+)?(?:20\d{2}[\-–]20\d{2}\s+)?([A-Z][\w\-]+(?:\s+[A-Z][\w\-]+){1,3})/i)
+    const makeModel = makeModelMatch ? makeModelMatch[1].trim() : ''
+    const car = makeModel && year ? `${makeModel} ${year}` : makeModel || title
+    // Extract position
+    const positions = []
+    if (/driver\s+bottom/i.test(title)) positions.push('Driver Bottom')
+    if (/driver\s+top/i.test(title)) positions.push('Driver Top')
+    if (/passenger\s+bottom/i.test(title)) positions.push('Passenger Bottom')
+    if (/passenger\s+top/i.test(title)) positions.push('Passenger Top')
+    // Extract material
+    let material = ''
+    if (/leather\s+perf/i.test(title)) material = 'Leather perf'
+    else if (/leather/i.test(title)) material = 'Leather'
+    else if (/vinyl\s+perf/i.test(title)) material = 'Vinyl perf'
+    else if (/vinyl/i.test(title)) material = 'Vinyl'
+    else if (/alcantara/i.test(title)) material = 'Vinyl & Alcantara'
+    else if (/cloth/i.test(title)) material = 'Cloth'
+    // Extract color
+    let color = ''
+    const colorMatch = title.match(/\b(black|grey|gray|beige|brown|red|blue|navy|tan|white|cream|camel|cognac|bordeaux)\b/i)
+    if (colorMatch) color = colorMatch[1].charAt(0).toUpperCase() + colorMatch[1].slice(1).toLowerCase()
+    setForm(prev => ({
+      ...prev,
+      car: car || prev.car,
+      position: positions.length > 0 ? positions : prev.position,
+      material: material || prev.material,
+      color: color || prev.color,
+    }))
+  }
+
   async function save(advanceStage = false) {
     setSaving(true)
     try {
@@ -154,7 +190,12 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
 
           <SectionLabel>Vehicle and product</SectionLabel>
           <Row>
-            <Field label="Car (make / model / year)"><input value={form.car || ''} onChange={e => setF('car', e.target.value)} readOnly={!canEdit} /></Field>
+            <Field label="Car (make / model / year)">
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <input value={form.car || ''} onChange={e => setF('car', e.target.value)} readOnly={!canEdit} style={{ flex: 1 }} />
+                  {canEdit && order.source === 'eBay' && <button onClick={parseTitle} style={{ fontSize: 11, color: '#185FA5', background: '#E6F1FB', border: '1px solid #b3d4f5', borderRadius: 6, padding: '0 10px', cursor: 'pointer', whiteSpace: 'nowrap' }}>⚡ Parse</button>}
+                </div>
+              </Field>
             <Field label="VIN number"><input value={form.vin || ''} onChange={e => setF('vin', e.target.value)} style={{ fontFamily: 'monospace', fontSize: 11 }} readOnly={!canEdit} /></Field>
           </Row>
           <Field label="Position (select all that apply)">
