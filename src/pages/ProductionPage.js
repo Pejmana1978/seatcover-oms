@@ -126,19 +126,34 @@ export default function ProductionPage({ orders, setOrders, role }) {
               </div>
             )}
           </div>
-          {(o.photos || []).length > 0 && (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 6 }}>
-              {o.photos.filter(p => p.url).map((p, i) => {
-                const ext = (p.name || '').split('.').pop().toLowerCase()
-                const isImage = ['jpg','jpeg','png','gif','webp'].includes(ext)
-                return isImage ? (
-                  <a key={i} href={p.url} target="_blank" rel="noreferrer">
-                    <img src={p.url} alt="" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 4, border: '1px solid #e0ddd8' }} />
-                  </a>
-                ) : null
-              })}
-            </div>
-          )}
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 10 }}>
+            {o.thumbnail && (
+              <div>
+                <div style={{ fontSize: 10, color: '#aaa', marginBottom: 3 }}>eBay listing</div>
+                <a href={'https://www.ebay.co.uk/itm/' + o.order_ref.replace(/-/g,'')} target="_blank" rel="noreferrer">
+                  <img src={o.thumbnail} alt="eBay" style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: 4, border: '1px solid #e0ddd8' }} />
+                </a>
+              </div>
+            )}
+            {(o.photos || []).filter(p => {
+              const ext = (p.name || '').split('.').pop().toLowerCase()
+              return ['jpg','jpeg','png','gif','webp'].includes(ext) && p.url
+            }).length > 0 && (
+              <div>
+                <div style={{ fontSize: 10, color: '#aaa', marginBottom: 3 }}>Customer photos</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {o.photos.filter(p => {
+                    const ext = (p.name || '').split('.').pop().toLowerCase()
+                    return ['jpg','jpeg','png','gif','webp'].includes(ext) && p.url
+                  }).map((p, i) => (
+                    <a key={i} href={p.url} target="_blank" rel="noreferrer">
+                      <img src={p.url} alt="" style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: 4, border: '1px solid #e0ddd8' }} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
       ))}
 
