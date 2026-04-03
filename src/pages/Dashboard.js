@@ -6,6 +6,9 @@ import { ToastContainer, useToast } from '../components/Toast'
 import OrdersPage from './OrdersPage'
 import ProductionPage from './ProductionPage'
 import ShippingPage from './ShippingPage'
+import ShippingUSPage from './ShippingUSPage'
+import ShippingSwedPage from './ShippingSwedPage'
+import StockPage from './StockPage'
 import StatsPage from './StatsPage'
 import UsersPage from './UsersPage'
 
@@ -15,6 +18,9 @@ const NAV_ICONS = {
   shipping: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="4" width="9" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M10 6h1.5l1.5 2v3h-3V6z" stroke="currentColor" strokeWidth="1.2"/><circle cx="3.5" cy="11.5" r="1" fill="currentColor"/><circle cx="10.5" cy="11.5" r="1" fill="currentColor"/></svg>,
   stats: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="7" width="3" height="6" rx="1" fill="currentColor" opacity=".6"/><rect x="5.5" y="4" width="3" height="9" rx="1" fill="currentColor" opacity=".8"/><rect x="10" y="1" width="3" height="12" rx="1" fill="currentColor"/></svg>,
   users: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="5" cy="4.5" r="2" stroke="currentColor" strokeWidth="1.2"/><path d="M1 12c0-2.2 1.8-4 4-4s4 1.8 4 4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/><path d="M9.5 3c1.1 0 2 .9 2 2s-.9 2-2 2" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/><path d="M11.5 10c1 .5 1.5 1.3 1.5 2" stroke="currentColor" strokeWidth="1.1" strokeLinecap="round"/></svg>,
+  shipping_us: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="4" width="9" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M10 6h1.5l1.5 2v3h-3V6z" stroke="currentColor" strokeWidth="1.2"/><circle cx="3.5" cy="11.5" r="1" fill="currentColor"/><circle cx="10.5" cy="11.5" r="1" fill="currentColor"/></svg>,
+  shipping_sweden: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="4" width="9" height="7" rx="1.5" stroke="currentColor" strokeWidth="1.2"/><path d="M10 6h1.5l1.5 2v3h-3V6z" stroke="currentColor" strokeWidth="1.2"/><circle cx="3.5" cy="11.5" r="1" fill="currentColor"/><circle cx="10.5" cy="11.5" r="1" fill="currentColor"/></svg>,
+  stock: <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="12" height="12" rx="2" stroke="currentColor" strokeWidth="1.2"/><path d="M4 7h6M7 4v6" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>,
 }
 
 export default function Dashboard() {
@@ -46,12 +52,16 @@ export default function Dashboard() {
     setLoading(false)
   }
 
-  const pendingCount = orders.filter(o => ['New', 'Awaiting verification'].includes(o.stage)).length
-  const prodCount = orders.filter(o => ['Verified', 'In production'].includes(o.stage)).length
+  const pendingCount = orders.filter(o => ['New', 'Contacted'].includes(o.stage)).length
+  const prodCount = orders.filter(o => ['Verified', 'In Production'].includes(o.stage)).length
+  const shipUSCount = orders.filter(o => o.stage === 'Production Complete').length
+  const shipSwedCount = orders.filter(o => o.stage === 'Shipped to Sweden').length
 
   function getBadge(p) {
     if (p === 'orders' && pendingCount > 0) return pendingCount
     if (p === 'production' && prodCount > 0) return prodCount
+    if (p === 'shipping_us' && shipUSCount > 0) return shipUSCount
+    if (p === 'shipping_sweden' && shipSwedCount > 0) return shipSwedCount
     return null
   }
 
@@ -123,6 +133,9 @@ export default function Dashboard() {
               {activePage === 'orders' && <OrdersPage orders={orders} setOrders={setOrders} role={role} />}
               {activePage === 'production' && <ProductionPage orders={orders} setOrders={setOrders} role={role} />}
               {activePage === 'shipping' && <ShippingPage orders={orders} setOrders={setOrders} role={role} />}
+              {activePage === 'shipping_us' && <ShippingUSPage orders={orders} setOrders={setOrders} role={role} />}
+              {activePage === 'shipping_sweden' && <ShippingSwedPage orders={orders} setOrders={setOrders} role={role} />}
+              {activePage === 'stock' && <StockPage />}
               {activePage === 'stats' && <StatsPage orders={orders} />}
               {activePage === 'users' && <UsersPage />}
             </>
