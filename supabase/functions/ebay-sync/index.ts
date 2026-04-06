@@ -99,9 +99,8 @@ serve(async () => {
       ].filter(Boolean).join(", ")
 
       const legacyItemId = item.legacyItemId || ""
-      const thumbnail = legacyItemId ? await getThumbnail(token, legacyItemId, sku) : ""
-
       const sku = item.sku || legacyItemId || ""
+      const thumbnail = legacyItemId ? await getThumbnail(token, legacyItemId, sku) : ""
       const price = item.lineItemCost?.value ? `${item.lineItemCost.value} ${item.lineItemCost.currency}` : ""
       const buyerUsername = buyer.username || ""
 
