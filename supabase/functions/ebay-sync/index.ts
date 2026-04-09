@@ -22,18 +22,27 @@ async function getEbayToken() {
 }
 
 async function getThumbnail(token: string, itemId: string, sku: string): Promise<string> {
-  try {
-    const res = await fetch(`https://api.ebay.com/sell/inventory/v1/inventory_item/${sku}`, {
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Language": "en-US"
-      },
-    })
-    const data = await res.json()
-    return data.product?.imageUrls?.[0] || `https://i.ebayimg.com/images/g/${itemId}s/s-l300.jpg`
-  } catch {
-    return `https://i.ebayimg.com/images/g/${itemId}s/s-l300.jpg`
+  const variationId = sku ? sku.split("_")[1] || "0" : "0"
+  const urls = [
+    `https://api.ebay.com/buy/browse/v1/item/v1|${itemId}|${variationId}?fieldgroups=PRODUCT`,
+    `https://api.ebay.com/buy/browse/v1/item/v1|${itemId}|0?fieldgroups=PRODUCT`,
+  ]
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "X-EBAY-C-MARKETPLACE-ID": "EBAY_GB",
+        },
+      })
+      const data = await res.json()
+      const img = data.image?.imageUrl || data.additionalImages?.[0]?.imageUrl || ""
+      if (img) return img
+    } catch {
+      continue
+    }
   }
+  return ""
 }
 
 const COUNTRY_CODES: Record<string, string> = {
