@@ -207,6 +207,7 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
 
 
 
+          <Field label="Production notes"><textarea value={form.notes || ''} onChange={e => setF('notes', e.target.value)} readOnly={!canEdit} style={{ minHeight: 50 }} /></Field>
           <SectionLabel>Vehicle and product</SectionLabel>
           <Row>
             <Field label="Car (make / model / year)">
@@ -255,8 +256,12 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
                   </button>
                 )}
                 {form.stock_item && (
-                  <div style={{ fontSize: 11, color: '#27a069', background: '#f0faf5', border: '1px solid #9FE1CB', borderRadius: 6, padding: '5px 10px' }}>
-                    ✅ {form.stock_item.model} — {form.stock_item.type} — {form.stock_item.colour}
+                  <div style={{ fontSize: 11, color: '#27a069', background: '#f0faf5', border: '1px solid #9FE1CB', borderRadius: 6, padding: '5px 10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span>✅ {form.stock_item.model} — {form.stock_item.type} — {form.stock_item.colour}</span>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      <button onClick={() => setShowStockPicker(true)} style={{ fontSize: 10, color: '#185FA5', background: 'none', border: '1px solid #b3d4f5', borderRadius: 4, padding: '2px 6px', cursor: 'pointer' }}>Change</button>
+                      <button onClick={() => setF('stock_item', null)} style={{ fontSize: 10, color: '#E24B4A', background: 'none', border: '1px solid #f5b3b3', borderRadius: 4, padding: '2px 6px', cursor: 'pointer' }}>Remove</button>
+                    </div>
                   </div>
                 )}
               </div>
@@ -322,8 +327,6 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
             </Field>
             <Field label="Order date"><input type="date" value={form.order_date || ''} onChange={e => setF('order_date', e.target.value)} readOnly={!canEdit} /></Field>
           </Row>
-          <Field label="Production notes"><textarea value={form.notes || ''} onChange={e => setF('notes', e.target.value)} readOnly={!canEdit} /></Field>
-
           {canEdit && (
             <Field label="Move to stage">
               <select value={form.stage} onChange={e => setF('stage', e.target.value)}>
