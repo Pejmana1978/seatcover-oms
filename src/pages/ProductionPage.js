@@ -40,7 +40,8 @@ export default function ProductionPage({ orders, setOrders, role }) {
 
   function printSheet(o) {
     const w = window.open('', '_blank')
-    const photos = (o.photos || []).filter(p => p.url).map(p => `<img src="${p.url}" style="max-width:180px;max-height:180px;border-radius:6px;border:1px solid #ddd" />`).join('')
+    const photos = (o.photos || []).filter(p => p.url && ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase())).map(p => `<img src="${p.url}" style="max-width:180px;max-height:180px;border-radius:6px;border:1px solid #ddd" />`).join('')
+    const thumbHtml = o.thumbnail ? `<img src="${o.thumbnail}" style="max-width:180px;max-height:180px;border-radius:6px;border:1px solid #ddd" />` : ''
     w.document.write(`
       <html><head><title>Production Sheet</title>
       <style>body{font-family:sans-serif;padding:32px;font-size:14px;line-height:2}h2{margin-bottom:12px}td:first-child{color:#888;min-width:140px;padding-right:16px}table{border-collapse:collapse}.photos{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}@media print{button{display:none}}</style>
@@ -56,7 +57,7 @@ export default function ProductionPage({ orders, setOrders, role }) {
         <tr><td>Notes</td><td>${o.notes || '—'}</td></tr>
         <tr><td>Status</td><td>${o.stage}</td></tr>
       </table>
-      ${photos ? `<div class="photos">${photos}</div>` : ''}
+      ${thumbHtml || photos ? `<div class="photos">${thumbHtml}${photos}</div>` : ''}
       <br/><button onclick="window.print()">Print</button>
       </body></html>`)
     w.document.close()
@@ -176,7 +177,7 @@ export default function ProductionPage({ orders, setOrders, role }) {
           <tr><td>Notes</td><td>${o.notes || '—'}</td></tr>
           <tr><td>Status</td><td>${o.stage}</td></tr>
         </table>
-        ${(o.photos || []).filter(p => p.url && ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase())).length > 0 ? `<div style="margin-top:12px"><div style="color:#888;font-size:11px;margin-bottom:6px">Photos</div><div style="display:flex;gap:8px;flex-wrap:wrap">${(o.photos || []).filter(p => p.url && ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase())).map(p => `<img src="${p.url}" style="width:120px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #e0ddd8"/>`).join('')}</div></div>` : ''}
+        <div style="margin-top:12px"><div style="color:#888;font-size:11px;margin-bottom:6px">Photos</div><div style="display:flex;gap:8px;flex-wrap:wrap">${o.thumbnail ? `<img src="${o.thumbnail}" style="width:120px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #e0ddd8"/>` : ''}${(o.photos || []).filter(p => p.url && ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase())).map(p => `<img src="${p.url}" style="width:120px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #e0ddd8"/>`).join('')}</div></div>
       </div>`).join('')}
       <button onclick="window.print()">Print all</button>
       </body></html>`)
