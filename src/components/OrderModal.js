@@ -31,23 +31,32 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
   const [form, setForm] = useState({ ...order })
   const [saving, setSaving] = useState(false)
   const [showStockPicker, setShowStockPicker] = useState(false)
-  const [lightbox, setLightbox] = useState(null)
+  const [lightboxIdx, setLightboxIdx] = useState(null)
   const [photos, setPhotos] = useState(order.photos || [])
   const fileRef = useRef()
   const toast = useToast()
 
   const canEdit = role === 'admin' || role === 'sales' || role === 'production'
 
+  const imagePhotos = photos.filter(p => {
+    const ext = (p.name || '').split('.').pop().toLowerCase()
+    return ['jpg','jpeg','png','gif','webp'].includes(ext) && p.url
+  })
+
   useEffect(() => {
     function handleKey(e) {
       if (e.key === 'Escape') {
-        if (lightbox) setLightbox(null)
+        if (lightboxIdx !== null) setLightboxIdx(null)
         else onClose()
+      }
+      if (lightboxIdx !== null) {
+        if (e.key === 'ArrowRight') setLightboxIdx(i => Math.min(i + 1, imagePhotos.length - 1))
+        if (e.key === 'ArrowLeft') setLightboxIdx(i => Math.max(i - 1, 0))
       }
     }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [lightbox, onClose])
+  }, [lightboxIdx, onClose, imagePhotos.length])
 
   function setF(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
 
@@ -311,7 +320,7 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
                 <div key={i} style={{ position: 'relative', width: 90 }}>
                   <a href={p.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
                     {isImage
-                      ? <img src={p.url} alt={name} onClick={e => { e.preventDefault(); setLightbox(p.url) }} style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 6, border: '1px solid #e0ddd8', display: 'block', cursor: 'zoom-in' }} />
+                      ? <img src={p.url} alt={name} onClick={e => { e.preventDefault(); setLightboxIdx(imagePhotos.findIndex(x => x.url === p.url)) }} style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 6, border: '1px solid #e0ddd8', display: 'block', cursor: 'zoom-in' }} />
                       : <div style={{ width: 90, height: 90, borderRadius: 6, border: '1px solid #e0ddd8', background: '#f5f5f4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                           <span style={{ fontSize: 28 }}>{isPDF ? '📄' : '📎'}</span>
                           <span style={{ fontSize: 9, color: '#888', textAlign: 'center', padding: '0 4px', wordBreak: 'break-all' }}>{name.length > 12 ? name.slice(0,12)+'…' : name}</span>
@@ -435,10 +444,13 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
           </div>
         </div>
       )}
-      {lightbox && (
-        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, cursor: 'zoom-out' }}>
-          <img src={lightbox} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }} />
-          <div style={{ position: 'absolute', top: 20, right: 24, color: '#fff', fontSize: 28, cursor: 'pointer' }} onClick={() => setLightbox(null)}>✕</div>
+      {lightboxIdx !== null && imagePhotos[lightboxIdx] && (
+        <div onClick={() => setLightboxIdx(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 }}>
+          <div style={{ position: 'absolute', top: 20, right: 24, color: '#fff', fontSize: 28, cursor: 'pointer' }} onClick={() => setLightboxIdx(null)}>✕</div>
+          {lightboxIdx > 0 && <div onClick={e => { e.stopPropagation(); setLightboxIdx(i => i - 1) }} style={{ position: 'absolute', left: 24, color: '#fff', fontSize: 40, cursor: 'pointer', userSelect: 'none' }}>‹</div>}
+          <img src={imagePhotos[lightboxIdx].url} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }} onClick={e => e.stopPropagation()} />
+          {lightboxIdx < imagePhotos.length - 1 && <div onClick={e => { e.stopPropagation(); setLightboxIdx(i => i + 1) }} style={{ position: 'absolute', right: 24, color: '#fff', fontSize: 40, cursor: 'pointer', userSelect: 'none' }}>›</div>}
+          <div style={{ position: 'absolute', bottom: 20, color: '#aaa', fontSize: 12 }}>{lightboxIdx + 1} / {imagePhotos.length}</div>
         </div>
       )}
       {showStockPicker && (
