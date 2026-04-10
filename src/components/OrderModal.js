@@ -39,6 +39,12 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
 
   function setF(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
 
+  const COUNTRY_NAMES = { GB: 'United Kingdom', DE: 'Germany', FR: 'France', IT: 'Italy', ES: 'Spain', NL: 'Netherlands', BE: 'Belgium', AT: 'Austria', SE: 'Sweden', NO: 'Norway', DK: 'Denmark', FI: 'Finland', PL: 'Poland', PT: 'Portugal', IE: 'Ireland', CH: 'Switzerland', US: 'United States', CA: 'Canada', AU: 'Australia', NZ: 'New Zealand', JP: 'Japan' }
+  function expandAddress(addr) {
+    if (!addr) return ''
+    return addr.replace(/,\s*([A-Z]{2})$/, (m, code) => COUNTRY_NAMES[code] ? ', ' + COUNTRY_NAMES[code] : m)
+  }
+
   function parseTitle() {
     const title = form.car || ''
     // Extract year range
@@ -207,7 +213,9 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
 
 
 
-          <Field label="Production notes"><textarea value={form.notes || ''} onChange={e => setF('notes', e.target.value)} readOnly={!canEdit} style={{ minHeight: 50 }} /></Field>
+          <Field label="Production notes">
+            <textarea value={form.notes || ''} onChange={e => setF('notes', e.target.value)} readOnly={!canEdit} style={{ minHeight: 50, background: form.notes ? '#FFFBEB' : '', border: form.notes ? '1px solid #F59E0B' : '', borderRadius: 4 }} />
+          </Field>
           <SectionLabel>Vehicle and product</SectionLabel>
           <Row>
             <Field label="Car (make / model / year)">
@@ -317,7 +325,7 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
             <Field label="Tracking number"><input value={form.tracking_number || ''} onChange={e => setF('tracking_number', e.target.value)} readOnly={!canEdit} placeholder="e.g. 1Z6V1294..." /></Field>
           </Row>
           <Field label="Shipping address">
-            <textarea value={(form.address || '').replace(/, /g, '\n')} onChange={e => setF('address', e.target.value.replace(/\n/g, ', '))} readOnly={!canEdit} style={{ minHeight: 80 }} placeholder={'Street\nCity\nPostcode\nCountry'} />
+            <textarea value={expandAddress(form.address || '').replace(/, /g, '\n')} onChange={e => setF('address', e.target.value.replace(/\n/g, ', '))} readOnly={!canEdit} style={{ minHeight: 80 }} placeholder={'Street\nCity\nPostcode\nCountry'} />
           </Field>
           <Row>
             <Field label="Source">
