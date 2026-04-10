@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { StageBadge } from '../components/Badges'
 import Btn from '../components/Btn'
 import { STAGES } from '../lib/constants'
@@ -8,7 +8,20 @@ import OrderModal from '../components/OrderModal'
 
 export default function ProductionPage({ orders, setOrders, role }) {
   const [selected, setSelected] = useState(null)
+  const [lightbox, setLightbox] = useState({ photos: [], idx: 0 })
+  const [showLightbox, setShowLightbox] = useState(false)
   const toast = useToast()
+
+  useEffect(() => {
+    function handleKey(e) {
+      if (!showLightbox) return
+      if (e.key === 'Escape') setShowLightbox(false)
+      if (e.key === 'ArrowRight') setLightbox(prev => ({ ...prev, idx: Math.min(prev.idx + 1, prev.photos.length - 1) }))
+      if (e.key === 'ArrowLeft') setLightbox(prev => ({ ...prev, idx: Math.max(prev.idx - 1, 0) }))
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [showLightbox])
 
   const prod = orders.filter(o => ['Verified', 'In Production', 'Production Complete'].includes(o.stage))
 
@@ -227,9 +240,7 @@ export default function ProductionPage({ orders, setOrders, role }) {
             {o.thumbnail && (
               <div>
                 <div style={{ fontSize: 10, color: '#aaa', marginBottom: 3 }}>eBay listing</div>
-                <a href={'https://www.ebay.co.uk/itm/' + o.order_ref.replace(/-/g,'')} target="_blank" rel="noreferrer">
-                  <img src={o.thumbnail} alt="eBay" style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: 4, border: '1px solid #e0ddd8' }} />
-                </a>
+                <img src={o.thumbnail} alt="eBay" style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: 4, border: '1px solid #e0ddd8' }} />
               </div>
             )}
             {(o.photos || []).filter(p => {
@@ -242,11 +253,12 @@ export default function ProductionPage({ orders, setOrders, role }) {
                   {o.photos.filter(p => {
                     const ext = (p.name || '').split('.').pop().toLowerCase()
                     return ['jpg','jpeg','png','gif','webp'].includes(ext) && p.url
-                  }).map((p, i) => (
-                    <a key={i} href={p.url} target="_blank" rel="noreferrer">
-                      <img src={p.url} alt="" style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: 4, border: '1px solid #e0ddd8' }} />
-                    </a>
-                  ))}
+                  }).map((p, i) => {
+                    const imgs = o.photos.filter(p => ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase()) && p.url)
+                    return (
+                      <img key={i} src={p.url} alt="" onClick={() => { setLightbox({ photos: imgs, idx: i }); setShowLightbox(true) }} style={{ width: 70, height: 70, objectFit: 'cover', borderRadius: 4, border: '1px solid #e0ddd8', cursor: 'zoom-in' }} />
+                    )
+                  })}
                 </div>
               </div>
             )}
