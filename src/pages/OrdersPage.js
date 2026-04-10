@@ -146,6 +146,7 @@ export default function OrdersPage({ orders, setOrders, role }) {
                   <div style={{ fontSize: 12 }}>{o.car}</div>
                   <div style={{ fontSize: 10, color: '#aaa' }}>{o.color}</div>
                   {o.ebay_item_id && <a href={'https://www.ebay.co.uk/itm/' + o.ebay_item_id} target='_blank' rel='noreferrer' onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: '#185FA5', textDecoration: 'none' }}>View listing →</a>}
+                  {o.source === 'eBay' && o.order_ref && <a href={'https://www.ebay.co.uk/mesh/ord/details?orderid=' + o.order_ref} target='_blank' rel='noreferrer' onClick={e => e.stopPropagation()} style={{ fontSize: 10, color: '#185FA5', textDecoration: 'none' }}>View order →</a>}
                 </td>
                 <td style={{ padding: '9px 11px' }}><StageBadge stage={o.stage} /></td>
 
