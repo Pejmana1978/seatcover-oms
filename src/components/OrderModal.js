@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import Modal from './Modal'
 import Btn from './Btn'
 import StageProgress from './StageProgress'
@@ -31,11 +31,23 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
   const [form, setForm] = useState({ ...order })
   const [saving, setSaving] = useState(false)
   const [showStockPicker, setShowStockPicker] = useState(false)
+  const [lightbox, setLightbox] = useState(null)
   const [photos, setPhotos] = useState(order.photos || [])
   const fileRef = useRef()
   const toast = useToast()
 
   const canEdit = role === 'admin' || role === 'sales' || role === 'production'
+
+  useEffect(() => {
+    function handleKey(e) {
+      if (e.key === 'Escape') {
+        if (lightbox) setLightbox(null)
+        else onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [lightbox, onClose])
 
   function setF(k, v) { setForm(prev => ({ ...prev, [k]: v })) }
 
@@ -299,7 +311,7 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
                 <div key={i} style={{ position: 'relative', width: 90 }}>
                   <a href={p.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
                     {isImage
-                      ? <img src={p.url} alt={name} style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 6, border: '1px solid #e0ddd8', display: 'block' }} />
+                      ? <img src={p.url} alt={name} onClick={e => { e.preventDefault(); setLightbox(p.url) }} style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 6, border: '1px solid #e0ddd8', display: 'block', cursor: 'zoom-in' }} />
                       : <div style={{ width: 90, height: 90, borderRadius: 6, border: '1px solid #e0ddd8', background: '#f5f5f4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
                           <span style={{ fontSize: 28 }}>{isPDF ? '📄' : '📎'}</span>
                           <span style={{ fontSize: 9, color: '#888', textAlign: 'center', padding: '0 4px', wordBreak: 'break-all' }}>{name.length > 12 ? name.slice(0,12)+'…' : name}</span>
@@ -421,6 +433,12 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
             </div>
             <div style={{ marginTop: 10, fontFamily: 'monospace', fontSize: 13, letterSpacing: 2, textAlign: 'center', padding: '6px', border: '1px solid #e0ddd8', borderRadius: 4 }}>{order.order_ref}</div>
           </div>
+        </div>
+      )}
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000, cursor: 'zoom-out' }}>
+          <img src={lightbox} alt="" style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8, boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }} />
+          <div style={{ position: 'absolute', top: 20, right: 24, color: '#fff', fontSize: 28, cursor: 'pointer' }} onClick={() => setLightbox(null)}>✕</div>
         </div>
       )}
       {showStockPicker && (
