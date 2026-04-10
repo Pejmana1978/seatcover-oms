@@ -33,6 +33,7 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
   const [showStockPicker, setShowStockPicker] = useState(false)
   const [lightboxIdx, setLightboxIdx] = useState(null)
   const [photos, setPhotos] = useState(order.photos || [])
+  const [documents, setDocuments] = useState(order.documents || [])
   const fileRef = useRef()
   const toast = useToast()
 
@@ -105,7 +106,7 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
   async function save(advanceStage = false) {
     setSaving(true)
     try {
-      let updates = { ...form, photos }
+      let updates = { ...form, photos, documents }
       if (advanceStage) {
         const idx = STAGES.indexOf(form.stage)
         if (idx < STAGES.length - 1) updates.stage = STAGES[idx + 1]
@@ -153,6 +154,36 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
       setF('thumbnail', url)
       await updateOrder(order.id, { thumbnail: url })
       toast('Thumbnail updated')
+    } catch (err) {
+      toast(err.message, 'error')
+    }
+  }
+
+  async function handleDocUpload(e) {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    for (const file of files) {
+      try {
+        const { path, url } = await uploadPhoto(order.id, file)
+        setDocuments(prev => {
+          const updated = [...prev, { path, url, name: file.name }]
+          updateOrder(order.id, { documents: updated })
+          return updated
+        })
+        toast(file.name + ' uploaded')
+      } catch (err) {
+        toast(err.message, 'error')
+      }
+    }
+  }
+
+  async function handleDeleteDoc(doc, idx) {
+    try {
+      if (doc.path) await deletePhoto(doc.path)
+      const updated = documents.filter((_, i) => i !== idx)
+      setDocuments(updated)
+      await updateOrder(order.id, { documents: updated })
+      toast('Document removed')
     } catch (err) {
       toast(err.message, 'error')
     }
@@ -308,21 +339,20 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
               </div>
             </Field>
           </Row>
-          <SectionLabel>Files (photos, documents, VIN images)</SectionLabel>
+          <SectionLabel>Seat cover photos & VIN images</SectionLabel>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
-            {photos.length === 0 && <span style={{ fontSize: 12, color: '#aaa' }}>No files uploaded yet</span>}
+            {photos.length === 0 && <span style={{ fontSize: 12, color: '#aaa' }}>No photos uploaded yet</span>}
             {photos.map((p, i) => {
-              const name = p.name || ('file-' + (i+1))
+              const name = p.name || ('photo-' + (i+1))
               const ext = name.split('.').pop().toLowerCase()
               const isImage = ['jpg','jpeg','png','gif','webp'].includes(ext)
-              const isPDF = ext === 'pdf'
               return (
                 <div key={i} style={{ position: 'relative', width: 90 }}>
                   <a href={p.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
                     {isImage
                       ? <img src={p.url} alt={name} onClick={e => { e.preventDefault(); setLightboxIdx(imagePhotos.findIndex(x => x.url === p.url)) }} style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 6, border: '1px solid #e0ddd8', display: 'block', cursor: 'zoom-in' }} />
                       : <div style={{ width: 90, height: 90, borderRadius: 6, border: '1px solid #e0ddd8', background: '#f5f5f4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
-                          <span style={{ fontSize: 28 }}>{isPDF ? '📄' : '📎'}</span>
+                          <span style={{ fontSize: 28 }}>🖼</span>
                           <span style={{ fontSize: 9, color: '#888', textAlign: 'center', padding: '0 4px', wordBreak: 'break-all' }}>{name.length > 12 ? name.slice(0,12)+'…' : name}</span>
                         </div>
                     }
@@ -333,7 +363,7 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
               )
             })}
           </div>
-          <input ref={fileRef} type="file" accept="*/*" multiple style={{ display: 'none' }} onChange={handlePhotoUpload} />
+          <input ref={fileRef} type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handlePhotoUpload} />
           <div
             onClick={() => fileRef.current?.click()}
             onDragOver={e => { e.preventDefault(); e.currentTarget.style.background = '#f0f0f0'; e.currentTarget.style.borderColor = '#185FA5' }}
@@ -344,9 +374,42 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
               e.currentTarget.style.borderColor = '#ccc'
               Array.from(e.dataTransfer.files).forEach(file => handlePhotoUpload({ target: { files: [file] } }))
             }}
-            style={{ border: '1px dashed #ccc', borderRadius: 6, padding: 18, textAlign: 'center', fontSize: 12, color: '#888', cursor: 'pointer', background: '#fafaf9', transition: 'all 0.15s' }}>
-            📎 Drag & drop files here, or click to upload<br/>
-            <span style={{ fontSize: 10, color: '#bbb' }}>Images, PDFs, documents — any file type</span>
+            style={{ border: '1px dashed #ccc', borderRadius: 6, padding: 14, textAlign: 'center', fontSize: 12, color: '#888', cursor: 'pointer', background: '#fafaf9', transition: 'all 0.15s' }}>
+            🖼 Drag & drop photos here, or click to upload
+          </div>
+          <SectionLabel>Documents</SectionLabel>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
+            {documents.length === 0 && <span style={{ fontSize: 12, color: '#aaa' }}>No documents uploaded yet</span>}
+            {documents.map((d, i) => {
+              const name = d.name || ('doc-' + (i+1))
+              const ext = name.split('.').pop().toLowerCase()
+              const isPDF = ext === 'pdf'
+              return (
+                <div key={i} style={{ position: 'relative', width: 90 }}>
+                  <a href={d.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                    <div style={{ width: 90, height: 90, borderRadius: 6, border: '1px solid #e0ddd8', background: '#f5f5f4', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+                      <span style={{ fontSize: 28 }}>{isPDF ? '📄' : '📎'}</span>
+                      <span style={{ fontSize: 9, color: '#888', textAlign: 'center', padding: '0 4px', wordBreak: 'break-all' }}>{name.length > 12 ? name.slice(0,12)+'…' : name}</span>
+                    </div>
+                  </a>
+                  <div style={{ fontSize: 9, color: '#666', marginTop: 3, textAlign: 'center', wordBreak: 'break-all' }}>{name.length > 14 ? name.slice(0,14)+'…' : name}</div>
+                  <button onClick={() => handleDeleteDoc(d, i)} style={{ position: 'absolute', top: -6, right: -6, background: '#fff', border: '1px solid #e0ddd8', borderRadius: '50%', width: 18, height: 18, cursor: 'pointer', fontSize: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#888', padding: 0 }}>✕</button>
+                </div>
+              )
+            })}
+          </div>
+          <div
+            onClick={() => { const inp = document.createElement('input'); inp.type='file'; inp.accept='.pdf,.doc,.docx,.xls,.xlsx'; inp.multiple=true; inp.onchange=e=>handleDocUpload(e); inp.click() }}
+            onDragOver={e => { e.preventDefault(); e.currentTarget.style.background = '#f0f0f0'; e.currentTarget.style.borderColor = '#185FA5' }}
+            onDragLeave={e => { e.currentTarget.style.background = '#fafaf9'; e.currentTarget.style.borderColor = '#ccc' }}
+            onDrop={e => {
+              e.preventDefault()
+              e.currentTarget.style.background = '#fafaf9'
+              e.currentTarget.style.borderColor = '#ccc'
+              Array.from(e.dataTransfer.files).forEach(file => handleDocUpload({ target: { files: [file] } }))
+            }}
+            style={{ border: '1px dashed #ccc', borderRadius: 6, padding: 14, textAlign: 'center', fontSize: 12, color: '#888', cursor: 'pointer', background: '#fafaf9', transition: 'all 0.15s' }}>
+            📎 Drag & drop documents here, or click to upload
           </div>
           <SectionLabel>Customer and shipping</SectionLabel>
           <Row>
@@ -428,6 +491,16 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
                 <span style={{ fontFamily: k === 'VIN' ? 'monospace' : undefined }}>{v}</span>
               </div>
             ))}
+            {(order.photos || []).filter(p => ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase()) && p.url).length > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div style={{ color: '#888', fontSize: 11, marginBottom: 6 }}>Photos</div>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {order.photos.filter(p => ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase()) && p.url).map((p, i) => (
+                    <img key={i} src={p.url} alt="" style={{ width: 120, height: 120, objectFit: 'cover', borderRadius: 6, border: '1px solid #e0ddd8' }} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <SectionLabel>Shipping label</SectionLabel>
           <div style={{ border: '2px solid #e0ddd8', borderRadius: 8, padding: 14, fontSize: 12, lineHeight: 1.9 }}>
