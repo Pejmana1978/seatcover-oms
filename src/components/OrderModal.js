@@ -262,36 +262,6 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
               </div>
             </Field>
           </Row>
-          <SectionLabel>Customer and shipping</SectionLabel>
-          <Row>
-            <Field label="Customer name"><input value={form.customer_name || ''} onChange={e => setF('customer_name', e.target.value)} readOnly={!canEdit} /></Field>
-            <Field label="Phone"><input value={form.phone || ''} onChange={e => setF('phone', e.target.value)} readOnly={!canEdit} placeholder="As provided by eBay" /></Field>
-          </Row>
-          <Row>
-            <Field label="Email"><input value={form.email || ''} onChange={e => setF('email', e.target.value)} readOnly={!canEdit} /></Field>
-            <Field label="Tracking number"><input value={form.tracking_number || ''} onChange={e => setF('tracking_number', e.target.value)} readOnly={!canEdit} placeholder="e.g. 1Z6V1294..." /></Field>
-          </Row>
-          <Field label="Shipping address">
-            <textarea value={form.address || ''} onChange={e => setF('address', e.target.value)} readOnly={!canEdit} style={{ minHeight: 60 }} placeholder="Street, city, postcode, country" />
-          </Field>
-          <Row>
-            <Field label="Source">
-              <select value={form.source || ''} onChange={e => setF('source', e.target.value)} disabled={!canEdit}>
-                {['Shopify', 'eBay', 'Manual'].map(s => <option key={s}>{s}</option>)}
-              </select>
-            </Field>
-            <Field label="Order date"><input type="date" value={form.order_date || ''} onChange={e => setF('order_date', e.target.value)} readOnly={!canEdit} /></Field>
-          </Row>
-          <Field label="Production notes"><textarea value={form.notes || ''} onChange={e => setF('notes', e.target.value)} readOnly={!canEdit} /></Field>
-
-          {canEdit && (
-            <Field label="Move to stage">
-              <select value={form.stage} onChange={e => setF('stage', e.target.value)}>
-                {STAGES.map(s => <option key={s}>{s}</option>)}
-              </select>
-            </Field>
-          )}
-
           <SectionLabel>Files (photos, documents, VIN images)</SectionLabel>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
             {photos.length === 0 && <span style={{ fontSize: 12, color: '#aaa' }}>No files uploaded yet</span>}
@@ -332,6 +302,37 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
             📎 Drag & drop files here, or click to upload<br/>
             <span style={{ fontSize: 10, color: '#bbb' }}>Images, PDFs, documents — any file type</span>
           </div>
+          <SectionLabel>Customer and shipping</SectionLabel>
+          <Row>
+            <Field label="Customer name"><input value={form.customer_name || ''} onChange={e => setF('customer_name', e.target.value)} readOnly={!canEdit} /></Field>
+            <Field label="Phone"><input value={form.phone || ''} onChange={e => setF('phone', e.target.value)} readOnly={!canEdit} placeholder="As provided by eBay" /></Field>
+          </Row>
+          <Row>
+            <Field label="Email"><input value={form.email || ''} onChange={e => setF('email', e.target.value)} readOnly={!canEdit} /></Field>
+            <Field label="Tracking number"><input value={form.tracking_number || ''} onChange={e => setF('tracking_number', e.target.value)} readOnly={!canEdit} placeholder="e.g. 1Z6V1294..." /></Field>
+          </Row>
+          <Field label="Shipping address">
+            <textarea value={(form.address || '').replace(/, /g, '\n')} onChange={e => setF('address', e.target.value.replace(/\n/g, ', '))} readOnly={!canEdit} style={{ minHeight: 80 }} placeholder={'Street\nCity\nPostcode\nCountry'} />
+          </Field>
+          <Row>
+            <Field label="Source">
+              <select value={form.source || ''} onChange={e => setF('source', e.target.value)} disabled={!canEdit}>
+                {['Shopify', 'eBay', 'Manual'].map(s => <option key={s}>{s}</option>)}
+              </select>
+            </Field>
+            <Field label="Order date"><input type="date" value={form.order_date || ''} onChange={e => setF('order_date', e.target.value)} readOnly={!canEdit} /></Field>
+          </Row>
+          <Field label="Production notes"><textarea value={form.notes || ''} onChange={e => setF('notes', e.target.value)} readOnly={!canEdit} /></Field>
+
+          {canEdit && (
+            <Field label="Move to stage">
+              <select value={form.stage} onChange={e => setF('stage', e.target.value)}>
+                {STAGES.map(s => <option key={s}>{s}</option>)}
+              </select>
+            </Field>
+          )}
+
+
         </div>
       )}
 
