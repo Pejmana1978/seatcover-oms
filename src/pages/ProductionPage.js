@@ -163,6 +163,7 @@ export default function ProductionPage({ orders, setOrders, role }) {
           <tr><td>Notes</td><td>${o.notes || '—'}</td></tr>
           <tr><td>Status</td><td>${o.stage}</td></tr>
         </table>
+        ${(o.photos || []).filter(p => p.url && ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase())).length > 0 ? `<div style="margin-top:12px"><div style="color:#888;font-size:11px;margin-bottom:6px">Photos</div><div style="display:flex;gap:8px;flex-wrap:wrap">${(o.photos || []).filter(p => p.url && ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase())).map(p => `<img src="${p.url}" style="width:120px;height:120px;object-fit:cover;border-radius:6px;border:1px solid #e0ddd8"/>`).join('')}</div></div>` : ''}
       </div>`).join('')}
       <button onclick="window.print()">Print all</button>
       </body></html>`)
