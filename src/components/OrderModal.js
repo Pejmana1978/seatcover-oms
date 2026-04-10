@@ -205,14 +205,7 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
             </div>
           </div>
 
-          <Row>
-            <Field label="Customer name"><input value={form.customer_name || ''} onChange={e => setF('customer_name', e.target.value)} readOnly={!canEdit} /></Field>
-            <Field label="Phone (all numbers with country code)"><input value={form.phone || ''} onChange={e => setF('phone', e.target.value)} readOnly={!canEdit} placeholder="+44 7700 000000 / +44 1234 567890" /></Field>
-          </Row>
-          <Field label="Email"><input value={form.email || ''} onChange={e => setF('email', e.target.value)} readOnly={!canEdit} /></Field>
-          <Field label="Shipping address">
-            <textarea value={form.address || ''} onChange={e => setF('address', e.target.value)} readOnly={!canEdit} style={{ minHeight: 70 }} placeholder="Street, city, postcode, country" />
-          </Field>
+
 
           <SectionLabel>Vehicle and product</SectionLabel>
           <Row>
