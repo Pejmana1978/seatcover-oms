@@ -55,6 +55,14 @@ export default function ShippingSwedPage({ orders, setOrders, role }) {
       setOrders(prev => prev.map(x => x.id === o.id ? updated : x))
       downloadPDF(data.labelBase64, data.trackingNumber)
       toast('Label created — tracking: ' + data.trackingNumber)
+      // Push tracking to eBay
+      if (o.source === 'eBay' && o.order_ref) {
+        fetch('/api/ebay-tracking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: o.order_ref, trackingNumber: data.trackingNumber })
+        }).catch(() => {})
+      }
     } catch(e) { toast(e.message, 'error') }
     setLabelLoading(prev => ({ ...prev, [o.id]: null }))
   }

@@ -92,6 +92,14 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
       const updated = await updateOrder(order.id, updates)
       onUpdated(updated)
       toast(advanceStage ? `Advanced to "${updates.stage}"` : 'Order saved')
+      // Push tracking to eBay if tracking number was added/changed
+      if (order.source === 'eBay' && updates.tracking_number && updates.tracking_number !== order.tracking_number) {
+        fetch('/api/ebay-tracking', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ orderId: order.order_ref, trackingNumber: updates.tracking_number })
+        }).catch(() => {})
+      }
       onClose()
     } catch (e) {
       toast(e.message, 'error')

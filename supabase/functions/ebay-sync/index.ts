@@ -116,11 +116,7 @@ serve(async () => {
       const thumbnail = legacyItemId ? await getThumbnail(legacyItemId, sku) : ""
       const price = item.lineItemCost?.value ? `${item.lineItemCost.value} ${item.lineItemCost.currency}` : ""
       const buyerUsername = buyer.username || ""
-      const notes = [
-        buyerUsername ? `Buyer: ${buyerUsername}` : "",
-        sku ? `SKU: ${sku}` : "",
-        price ? `Price: ${price}` : "",
-      ].filter(Boolean).join(" | ")
+      const notes = ""  // Buyer/SKU/Price shown in top info box
       const { error } = await supabase.from("orders").insert({
         order_ref: ref,
         customer_name: shipTo.fullName || buyerUsername || "eBay Customer",
