@@ -164,10 +164,13 @@ serve(async () => {
       const refundAmount = ebayOrder.paymentSummary?.refunds?.reduce((sum: number, r: any) => sum + parseFloat(r.amount?.value || 0), 0) || 0
       if (refundAmount > 0 && refundAmount !== existing.refund_amount) {
         const refundDate = ebayOrder.paymentSummary?.refunds?.[0]?.refundDate?.slice(0, 10) || new Date().toISOString().slice(0, 10)
+        const saleAmount = existing.sale_amount || 0
+        const isFullRefund = saleAmount > 0 && refundAmount >= saleAmount
         await supabase.from("orders").update({
           refund_amount: refundAmount,
           refund_date: refundDate,
-          refund_note: ebayOrder.paymentSummary?.refunds?.[0]?.refundType || 'Refund'
+          refund_note: ebayOrder.paymentSummary?.refunds?.[0]?.refundType || 'Refund',
+          archived: isFullRefund ? true : false
         }).eq("id", existing.id)
         refunded++
       }
