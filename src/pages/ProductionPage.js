@@ -110,15 +110,7 @@ export default function ProductionPage({ orders, setOrders, role }) {
     w.document.close()
   }
 
-  function _unused(o) {
-    const w = window.open('', '_blank')
-    const photos = []
-    const thumbHtml = ''
-    w.document.write(``)
-      <br/><button onclick="window.print()">Print</button>
-      </body></html>`)
-    w.document.close()
-  }
+
 
   function _unused_printPackingSlip(o) {
     const notes = o.notes || ''
