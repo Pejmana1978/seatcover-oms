@@ -38,26 +38,83 @@ export default function ProductionPage({ orders, setOrders, role }) {
     } catch (e) { toast(e.message, 'error') }
   }
 
+  function buildSheetHTML(o) {
+    const customerPhotos = (o.photos || []).filter(p => p.url && ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase()))
+    const positions = (o.position || []).join(' & ') || '—'
+    const vinYear = [o.vin ? `VIN: ${o.vin}` : '', o.order_date ? `Year: ${o.order_date.slice(0,4)}` : ''].filter(Boolean).join(' &nbsp;&nbsp; ')
+    return `
+      <div class="sheet">
+        <div class="header">
+          <div class="header-left">
+            <div class="order-date">Order ${new Date().toISOString().slice(0,10)}</div>
+            <div class="car">${o.car}</div>
+            <div class="order-ref">Order: ${o.order_ref}</div>
+          </div>
+        </div>
+        <div class="main-row">
+          <div class="col-photo">
+            ${customerPhotos.length > 0 ? `<img src="${customerPhotos[0].url}" class="customer-photo" />` : '<div class="no-photo">No photo</div>'}
+          </div>
+          <div class="col-details">
+            <div class="position ${(o.position||[]).length > 1 ? 'highlight' : ''}">${positions}</div>
+            <div class="material">${o.material || '—'}</div>
+            <div class="color">${o.color || '—'}</div>
+            ${o.notes ? `<div class="notes">${o.notes}</div>` : ''}
+          </div>
+          <div class="col-qty">
+            <div class="qty">${o.quantity || 1}</div>
+          </div>
+          <div class="col-right">
+            ${o.thumbnail ? `<img src="${o.thumbnail}" class="thumb" />` : ''}
+            <div class="vin">${vinYear}</div>
+          </div>
+        </div>
+        <div class="comment-box">
+          <div class="comment-label">Comments / Notes for production</div>
+          <div class="comment-lines"></div>
+        </div>
+      </div>`
+  }
+
   function printSheet(o) {
     const w = window.open('', '_blank')
-    const photos = (o.photos || []).filter(p => p.url && ['jpg','jpeg','png','gif','webp'].includes((p.name||'').split('.').pop().toLowerCase())).map(p => `<img src="${p.url}" style="max-width:180px;max-height:180px;border-radius:6px;border:1px solid #ddd" />`).join('')
-    const thumbHtml = o.thumbnail ? `<img src="${o.thumbnail}" style="max-width:180px;max-height:180px;border-radius:6px;border:1px solid #ddd" />` : ''
     w.document.write(`
       <html><head><title>Production Sheet</title>
-      <style>body{font-family:sans-serif;padding:32px;font-size:14px;line-height:2}h2{margin-bottom:12px}td:first-child{color:#888;min-width:140px;padding-right:16px}table{border-collapse:collapse}.photos{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}@media print{button{display:none}}</style>
-      </head><body>
-      <h2>Production Sheet</h2>
-      <table>
-        <tr><td>Car</td><td><strong>${o.car}</strong></td></tr>
-        <tr><td>VIN</td><td style="font-family:monospace"><strong>${o.vin || '—'}</strong></td></tr>
-        <tr><td>Position</td><td><strong>${(o.position || []).join(', ') || '—'}</strong></td></tr>
-        <tr><td>Material</td><td><strong>${o.material || '—'}</strong></td></tr>
-        <tr><td>Color / Trim</td><td><strong>${o.color || '—'}</strong></td></tr>
-        <tr><td>Quantity</td><td><strong>${o.quantity || 1}</strong></td></tr>
-        <tr><td>Notes</td><td>${o.notes || '—'}</td></tr>
-        <tr><td>Status</td><td>${o.stage}</td></tr>
-      </table>
-      ${thumbHtml || photos ? `<div class="photos">${thumbHtml}${photos}</div>` : ''}
+      <style>
+        * { box-sizing: border-box; }
+        body { font-family: Arial, sans-serif; padding: 24px; font-size: 13px; color: #000; }
+        .sheet { border: 1px solid #ccc; border-radius: 6px; padding: 16px; margin-bottom: 24px; page-break-after: always; }
+        .header { margin-bottom: 10px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+        .order-date { font-size: 11px; color: #666; }
+        .car { font-size: 16px; font-weight: bold; margin: 2px 0; }
+        .order-ref { font-size: 11px; color: #555; }
+        .main-row { display: grid; grid-template-columns: 200px 1fr 80px 160px; gap: 16px; align-items: start; margin: 12px 0; }
+        .customer-photo { width: 180px; height: 160px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; }
+        .no-photo { width: 180px; height: 160px; background: #f5f5f5; border: 1px dashed #ccc; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 12px; }
+        .position { font-size: 15px; font-weight: bold; margin-bottom: 6px; }
+        .position.highlight { color: #d97706; }
+        .material { font-size: 13px; margin-bottom: 4px; }
+        .color { font-size: 13px; color: #333; margin-bottom: 4px; }
+        .notes { font-size: 11px; color: #666; margin-top: 8px; font-style: italic; }
+        .qty { font-size: 48px; font-weight: bold; text-align: center; line-height: 1; padding-top: 20px; }
+        .thumb { width: 120px; height: 100px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; margin-bottom: 8px; }
+        .vin { font-size: 10px; color: #555; font-family: monospace; }
+        .comment-box { border-top: 1px solid #ddd; padding-top: 10px; margin-top: 8px; }
+        .comment-label { font-size: 11px; color: #888; margin-bottom: 6px; }
+        .comment-lines { border: 1px solid #ddd; border-radius: 4px; height: 50px; }
+        @media print { button { display: none } .sheet { page-break-after: always; } }
+      </style></head><body>
+      ${buildSheetHTML(o)}
+      <button onclick="window.print()" style="margin-top:16px">Print</button>
+      </body></html>`)
+    w.document.close()
+  }
+
+  function _unused(o) {
+    const w = window.open('', '_blank')
+    const photos = []
+    const thumbHtml = ''
+    w.document.write(``)
       <br/><button onclick="window.print()">Print</button>
       </body></html>`)
     w.document.close()
