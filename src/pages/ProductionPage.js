@@ -45,13 +45,16 @@ export default function ProductionPage({ orders, setOrders, role }) {
     const photosRow = customerPhotos.length > 0 ? '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid #eee">' + customerPhotos.map(p => '<img src="' + p.url + '" style="height:160px;max-width:220px;object-fit:contain;border-radius:4px;border:1px solid #ddd;background:#f9f9f9" />').join('') + '</div>' : ''
     const thumbImg = o.thumbnail ? '<img src="' + o.thumbnail + '" style="height:90px;max-width:110px;object-fit:contain;border-radius:4px;border:1px solid #ddd;background:#f9f9f9;display:block" />' : ''
     const notesHtml = o.notes ? '<div style="font-size:11px;background:#FFFBEB;border:1px solid #F59E0B;border-radius:4px;padding:3px 7px;margin-top:6px;display:inline-block">' + o.notes + '</div>' : ''
+    const lastCol = (o.vin ? '<div style="font-size:10px;font-family:monospace;color:#555;margin-bottom:4px">VIN: ' + o.vin + '</div>' : '') +
+      (o.year ? '<div style="font-size:11px;color:#555;margin-bottom:6px">Year: ' + o.year + '</div>' : '') +
+      notesHtml
     return '<div style="border:1px solid #ccc;border-radius:6px;padding:14px;margin-bottom:16px;page-break-inside:avoid">' +
       '<table style="width:100%;border-collapse:collapse"><tr>' +
       '<td style="width:22%;vertical-align:top;padding-right:10px"><div style="font-size:15px;font-weight:bold;line-height:1.3">' + o.car + '</div><div style="font-size:11px;color:#666;margin-top:3px">Order: ' + o.order_ref + '</div></td>' +
-      '<td style="width:28%;vertical-align:top;padding-right:10px"><div style="font-size:15px;font-weight:bold;color:' + (isMultiPos ? '#d97706' : '#000') + '">' + positions + '</div><div style="font-size:13px;margin-top:3px">' + (o.material || '—') + '</div><div style="font-size:13px;color:#333">' + (o.color || '—') + '</div>' + notesHtml + '</td>' +
+      '<td style="width:28%;vertical-align:top;padding-right:10px"><div style="font-size:15px;font-weight:bold;color:' + (isMultiPos ? '#d97706' : '#000') + '">' + positions + '</div><div style="font-size:13px;margin-top:3px">' + (o.material || '—') + '</div><div style="font-size:13px;color:#333">' + (o.color || '—') + '</div></td>' +
       '<td style="width:8%;vertical-align:top;text-align:center"><div style="font-size:48px;font-weight:bold;line-height:1">' + (o.quantity || 1) + '</div></td>' +
       '<td style="width:16%;vertical-align:top;padding:0 10px">' + thumbImg + '</td>' +
-      '<td style="width:26%;vertical-align:top;font-size:10px;font-family:monospace;color:#555">' + (o.vin ? '<div>VIN: ' + o.vin + '</div>' : '') + '</td>' +
+      '<td style="width:26%;vertical-align:top">' + lastCol + '</td>' +
       '</tr></table>' +
       photosRow +
       '</div>'

@@ -288,6 +288,9 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
               </Field>
             <Field label="VIN number"><input value={form.vin || ''} onChange={e => setF('vin', e.target.value)} style={{ fontFamily: 'monospace', fontSize: 11 }} readOnly={!canEdit} /></Field>
           </Row>
+          <Row>
+            <Field label="Year (specific to this order)"><input value={form.year || ''} onChange={e => setF('year', e.target.value)} readOnly={!canEdit} placeholder="e.g. 2019" style={{ width: 100 }} /></Field>
+          </Row>
           <Field label="Position (select all that apply)">
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {POSITION_OPTIONS.map(p => (
