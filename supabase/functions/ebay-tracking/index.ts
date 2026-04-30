@@ -28,10 +28,11 @@ serve(async (req) => {
       headers: { "Authorization": `Bearer ${token}` }
     })
     const orderData = await orderRes.json()
+    console.log('orderData:', JSON.stringify(orderData))
     const lineItemId = orderData.lineItems?.[0]?.lineItemId
 
     if (!lineItemId) {
-      return new Response(JSON.stringify({ error: "Could not find lineItemId for order" }), { status: 400 })
+      return new Response(JSON.stringify({ error: 'Could not find lineItemId', orderKeys: Object.keys(orderData) }), { status: 400 })
     }
 
     const res = await fetch(`https://api.ebay.com/sell/fulfillment/v1/order/${orderId}/shipping_fulfillment`, {
