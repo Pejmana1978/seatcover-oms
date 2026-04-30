@@ -129,11 +129,34 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
     setSaving(false)
   }
 
+  async function compressImage(file, maxWidth = 1200, quality = 0.75) {
+    return new Promise(resolve => {
+      const img = new Image()
+      const url = URL.createObjectURL(file)
+      img.onload = () => {
+        const scale = Math.min(1, maxWidth / img.width)
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width * scale
+        canvas.height = img.height * scale
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height)
+        canvas.toBlob(blob => {
+          URL.revokeObjectURL(url)
+          resolve(new File([blob], file.name, { type: 'image/jpeg' }))
+        }, 'image/jpeg', quality)
+      }
+      img.src = url
+    })
+  }
+
   async function handlePhotoUpload(e) {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
-    for (const file of files) {
+    for (let file of files) {
       try {
+        const ext = file.name.split('.').pop().toLowerCase()
+        if (['jpg','jpeg','png','webp'].includes(ext)) {
+          file = await compressImage(file)
+        }
         const { path, url } = await uploadPhoto(order.id, file)
         setPhotos(prev => {
           const updated = [...prev, { path, url, name: file.name }]
@@ -162,8 +185,12 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
   async function handleDocUpload(e) {
     const files = Array.from(e.target.files || [])
     if (!files.length) return
-    for (const file of files) {
+    for (let file of files) {
       try {
+        const ext = file.name.split('.').pop().toLowerCase()
+        if (['jpg','jpeg','png','webp'].includes(ext)) {
+          file = await compressImage(file)
+        }
         const { path, url } = await uploadPhoto(order.id, file)
         setDocuments(prev => {
           const updated = [...prev, { path, url, name: file.name }]
@@ -415,6 +442,9 @@ export default function OrderModal({ order, onClose, onUpdated, role }) {
             style={{ border: '1px dashed #ccc', borderRadius: 6, padding: 14, textAlign: 'center', fontSize: 12, color: '#888', cursor: 'pointer', background: '#fafaf9', transition: 'all 0.15s' }}>
             📎 Drag & drop documents here, or click to upload
           </div>
+          <Field label="Order number">
+            <input value={form.order_ref || ''} onChange={e => setF('order_ref', e.target.value)} readOnly={!canEdit} style={{ fontFamily: 'monospace' }} />
+          </Field>
           <SectionLabel>Customer and shipping</SectionLabel>
           <Row>
             <Field label="Customer name"><input value={form.customer_name || ''} onChange={e => setF('customer_name', e.target.value)} readOnly={!canEdit} /></Field>
