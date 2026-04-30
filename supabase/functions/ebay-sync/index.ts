@@ -153,9 +153,11 @@ serve(async () => {
       const existing = existingOrders?.find(o => o.order_ref === ref)
       if (!existing) continue
 
-      // Check for cancellation
-      if (ebayOrder.orderFulfillmentStatus === 'NOT_STARTED' && ebayOrder.cancelStatus?.cancelState === 'CANCEL_COMPLETE') {
-        await supabase.from("orders").update({ archived: true, refund_note: 'Cancelled on eBay' }).eq("id", existing.id)
+      // Check for cancellation - archive if cancelled regardless of refund state
+      const isCancelled = ebayOrder.cancelStatus?.cancelState === 'CANCEL_COMPLETE' ||
+        ebayOrder.orderFulfillmentStatus === 'NOT_STARTED' && (ebayOrder.cancelStatus?.cancelRequests?.length > 0)
+      if (isCancelled) {
+        await supabase.from("orders").update({ archived: true, refund_note: 'Cancelled on eBay', refund_amount: ebayOrder.pricingSummary?.total?.value ? parseFloat(ebayOrder.pricingSummary.total.value) : 0 }).eq("id", existing.id)
         cancelled++
         continue
       }
