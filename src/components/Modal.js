@@ -1,7 +1,7 @@
 export default function Modal({ title, onClose, footer, children, wide }) {
   return (
     <div
-      onClick={e => e.target === e.currentTarget && onClose()}
+
       style={{
         position: 'fixed', inset: 0, background: 'rgba(0,0,0,.45)',
         zIndex: 1000, display: 'flex', alignItems: 'flex-start',
