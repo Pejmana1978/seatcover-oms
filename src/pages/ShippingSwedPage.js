@@ -55,7 +55,6 @@ export default function ShippingSwedPage({ orders, setOrders, role }) {
       setOrders(prev => prev.map(x => x.id === o.id ? updated : x))
       downloadPDF(data.labelBase64, data.trackingNumber)
       toast('Label created — tracking: ' + data.trackingNumber)
-      // Push tracking to eBay
       if (o.source === 'eBay' && o.order_ref) {
         fetch('/api/ebay-tracking', {
           method: 'POST',
@@ -108,10 +107,17 @@ export default function ShippingSwedPage({ orders, setOrders, role }) {
         </div>
       )}
       {queue.map(o => (
-        <div key={o.id} style={{ background: '#fff', border: '1px solid #e0ddd8', borderRadius: 10, padding: '13px 15px', marginBottom: 10 }}>
+        <div key={o.id} style={{ background: o.ship_from_stock ? '#FFFBEB' : '#fff', border: o.ship_from_stock ? '1px solid #F59E0B' : '1px solid #e0ddd8', borderRadius: 10, padding: '13px 15px', marginBottom: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
             <div style={{ cursor: 'pointer' }} onClick={() => setSelected(o)}>
-              <div style={{ fontSize: 13, fontWeight: 600 }}>{o.order_ref}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 600 }}>{o.order_ref}</span>
+                {o.ship_from_stock && (
+                  <span style={{ fontSize: 10, fontWeight: 600, background: '#F59E0B', color: '#fff', borderRadius: 4, padding: '2px 7px' }}>
+                    📦 From Sweden stock
+                  </span>
+                )}
+              </div>
               <div style={{ fontSize: 11, color: '#888', marginTop: 2 }}>{o.customer_name} — {o.address}</div>
             </div>
             <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
