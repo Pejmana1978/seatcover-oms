@@ -179,6 +179,20 @@ export default function ShippingSwedPage({ orders, setOrders, role }) {
                 </div>
               </div>
             )}
+            {(o.documents || []).filter(d => d.url).length > 0 && (
+              <div>
+                <div style={{ fontSize: 10, color: '#aaa', marginBottom: 3 }}>Documents</div>
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                  {(o.documents || []).filter(d => d.url).map((d, i) => (
+                    <a key={i} href={d.url} target="_blank" rel="noreferrer"
+                      style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, textDecoration: 'none' }}>
+                      <div style={{ width: 70, height: 70, border: '1px solid #e0ddd8', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f8f7f5', fontSize: 28 }}>📄</div>
+                      <span style={{ fontSize: 9, color: '#888', maxWidth: 70, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.name || 'Document'}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ))}
